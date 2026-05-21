@@ -285,4 +285,4 @@ modelleri başarılı sonuçlar vermiştir.
 
 ## Akademik Amaç
 
-Bu proje, makine öğrenmesi tabanlı ağ güvenliği sistemlerinin geliştirilmesi, saldırı tespiti, veri analizi ve gerçek zamanlı güvenlik dashboard sistemlerinin tasarlanması amacıyla geliştirilmiştir.
+Bu proje, Akıllı Ağlar - SDN, Network Programlama ve Yapay Zekâ Uygulamaları Dersi kapsamında  makine öğrenmesi tabanlı ağ güvenliği sistemlerinin geliştirilmesi, saldırı tespiti, veri analizi ve gerçek zamanlı güvenlik dashboard sistemlerinin tasarlanması amacıyla geliştirilmiştir.
