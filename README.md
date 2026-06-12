@@ -1,281 +1,212 @@
-# Network Anomaly Detection System
+# 🛡️ Network Anomaly Detection System
 
 Makine öğrenmesi tabanlı ağ anomali ve saldırı tespit sistemi.
 
-Bu proje, network telemetry / flow verileri kullanılarak ağ trafiğinde bulunan anomali ve saldırıları tespit etmek amacıyla geliştirilmiştir. Sistem, farklı makine öğrenmesi modelleri kullanarak normal ağ trafiği ile saldırı içeren trafiği sınıflandırabilmekte ve sonuçları web tabanlı bir dashboard üzerinden canlı olarak analiz edebilmektedir.
+Bu proje, ağ trafiğini analiz ederek normal ve saldırı davranışlarını tespit etmek amacıyla geliştirilmiştir. Sistem hem ikili sınıflandırma (Normal / Saldırı) hem de çoklu sınıf saldırı tespiti gerçekleştirebilmektedir.
 
 ---
 
-## Projenin Amacı
+# 🚀 Özellikler
 
-Bu projenin amacı, ağ trafiğinde bulunan anomali ve saldırıları makine öğrenmesi yöntemleri kullanarak tespit etmektir. Sistem, ağ trafiğini analiz ederek normal ve saldırı içeren davranışları ayırt edebilmekte ve güvenlik analizlerini kullanıcı dostu bir dashboard üzerinden sunmaktadır.
-
-Proje kapsamında:
-- veri temizleme
-- feature engineering
-- model eğitimi
-- performans değerlendirme
-- canlı tahmin sistemleri
-
-geliştirilmiştir.
-
-Ayrıca sistem yalnızca binary classification ile sınırlı kalmayıp multi-class attack detection yaklaşımıyla saldırı türlerini de analiz edebilmektedir.
-
----
-
-## Kullanılan Veri Seti
-
-Projede UNSW-NB15 veri seti kullanılmıştır.
-
-Veri seti içerisinde:
-- normal ağ trafiği
-- saldırı trafiği
-- farklı saldırı kategorileri
-
-bulunmaktadır.
+* Binary Anomaly Detection (Normal / Attack)
+* Multi-Class Attack Detection
+* Random Forest, SVM ve XGBoost desteği
+* Gerçek zamanlı trafik analizi
+* Telemetry analizi
+* Sentetik trafik simülasyonu
+* Risk seviyesi hesaplama
+* Saldırı kategori analizi
+* Feature Importance analizi
+* PDF rapor oluşturma
+* Modern React Dashboard
 
 ---
 
-## Tespit Edilebilen Saldırı Türleri
+# 📊 Desteklenen Saldırı Türleri
 
-- DoS
-- Exploits
-- Fuzzers
-- Reconnaissance
-- Generic
-- Backdoor
-- Shellcode
-- Analysis
-
----
-
-## Kullanılan Makine Öğrenmesi Modelleri
-
-| Model | Açıklama |
-|---|---|
-| Random Forest | Ensemble tabanlı saldırı tespiti |
-| SVM | Yapısal trafik örüntülerini sınıflandırma |
-| XGBoost | Optimize edilmiş boosted-tree saldırı tespiti |
-| Multi-Class Random Forest | Saldırı kategorisi tahmini |
+* Normal Traffic
+* Generic
+* Exploits
+* DoS
+* Fuzzers
+* Reconnaissance
+* Backdoor
+* Shellcode
+* Worms
+* Analysis
 
 ---
 
-## Sistem Özellikleri
+# 🧠 Kullanılan Makine Öğrenmesi Modelleri
 
-- CSV yükleyerek canlı trafik analizi
-- Random Forest, SVM ve XGBoost model desteği
-- Binary attack detection
-- Multi-class attack detection
-- Risk seviyesi analizi
-- Threat severity sistemi
-- Attack ratio monitoring
-- Feature importance analizi
-- Prediction preview sistemi
-- React tabanlı dashboard
-- FastAPI backend mimarisi
+## Random Forest
+
+Karar ağaçlarının topluluk yaklaşımı ile çalışır ve yüksek doğruluk sağlar.
+
+## SVM (Support Vector Machine)
+
+Verileri hiper düzlem yardımıyla ayıran güçlü bir sınıflandırma algoritmasıdır.
+
+## XGBoost
+
+Gradient Boosting yaklaşımına dayanan yüksek performanslı bir ensemble modelidir.
 
 ---
 
-## Sistem Mimarisi
+# 📈 Telemetry Analizi
 
-```txt
-CSV Upload
-    ↓
-FastAPI Backend
-    ↓
-Model Selection
-(Random Forest / SVM / XGBoost)
-    ↓
-Prediction Engine
-    ↓
-Threat Analysis
-    ↓
+Sistem ağ trafiğinden aşağıdaki telemetry metriklerini üretmektedir:
+
+* Toplam Paket Sayısı
+* Toplam Byte Miktarı
+* Packet Rate
+* Byte Rate
+* Aktif Bağlantı Sayısı
+* Flow Sayısı
+* Ortalama Bağlantı Süresi
+
+Bu metrikler ağ davranışının detaylı analiz edilmesini sağlar.
+
+---
+
+# 🔬 Sentetik Trafik Simülasyonu
+
+Sistem CSV verisi olmadan test edilebilmesi için sentetik trafik üretmektedir.
+
+Desteklenen trafik profilleri:
+
+* Normal Traffic
+* Mixed Traffic
+* DDoS-like Traffic
+* Port Scan-like Traffic
+
+---
+
+# 🏗️ Sistem Mimarisi
+
+User
+↓
 React Dashboard
-```
+↓
+FastAPI Backend
+↓
+Machine Learning Models
+↓
+Prediction Engine
+↓
+Risk Analysis Module
+↓
+PDF Reporting System
 
 ---
 
-## Kullanılan Teknolojiler
+# 🗂️ Veri Seti
 
-### Backend
-- Python
-- FastAPI
-- Scikit-learn
-- XGBoost
-- Pandas
-- NumPy
-- Joblib
+Bu projede UNSW-NB15 veri seti kullanılmıştır.
 
-### Frontend
-- React
-- TypeScript
-- Vite
-- Axios
-- CSS
+UNSW-NB15;
 
-### Machine Learning
-- Random Forest
-- SVM
-- XGBoost
-- Multi-Class Classification
+* Modern ağ saldırılarını içerir.
+* Normal ve saldırı trafiğini birlikte barındırır.
+* 49 adet ağ özelliğinden oluşur.
+* Ağ güvenliği çalışmalarında yaygın olarak kullanılmaktadır.
 
 ---
 
-## Dashboard Özellikleri
+# ⚙️ Kullanılan Teknolojiler
 
-- Canlı trafik analizi
-- Model seçimi
-- Risk seviyesi analizi
-- Threat severity sistemi
-- Attack ratio monitoring
-- Prediction preview table
-- Feature importance visualization
-- Multi-class attack distribution
-- Responsive dashboard tasarımı
+## Backend
+
+* Python
+* FastAPI
+* Pandas
+* NumPy
+* Scikit-Learn
+* XGBoost
+
+## Frontend
+
+* React
+* TypeScript
+* Vite
+* CSS
 
 ---
 
-## Backend Kurulumu
+# 📸 Ekran Görüntüleri
 
-### Backend klasörüne gir
+## Dashboard
+
+![Dashboard](images/dashboard.png)
+
+## Binary Detection
+
+![Binary Detection](images/binary_detection.png)
+
+## Multi-Class Detection
+
+![Multi-Class Detection](images/multiclass_detection.png)
+
+## Telemetry Analysis
+
+![Telemetry](images/telemetry.png)
+
+## PDF Report
+
+![PDF Report](images/pdf_report.png)
+
+---
+
+# 🛠️ Kurulum
+
+## Backend
 
 ```bash
 cd backend
-```
 
-### Sanal ortam oluştur
-
-```bash
-python -m venv venv
-```
-
-### Sanal ortamı aktif et
-
-#### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-### Gereksinimleri yükle
-
-```bash
 pip install -r requirements.txt
+
+uvicorn main:app --reload
 ```
 
-### Backend sunucusunu başlat
-
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-### Swagger API ekranı
-
-Backend çalıştıktan sonra:
-
-```txt
-http://127.0.0.1:8000/docs
-```
-
-adresinden API test ekranına erişebilirsiniz.
-
----
-
-## Frontend Kurulumu
-
-### Frontend klasörüne gir
+## Frontend
 
 ```bash
 cd frontend
-```
 
-### Paketleri yükle
-
-```bash
 npm install
-```
 
-### Frontend geliştirme sunucusunu başlat
-
-```bash
 npm run dev
 ```
 
-### Frontend adresi
+---
 
-```txt
-http://localhost:5173
-```
+# 🎯 Proje Çıktıları
+
+* Ağ saldırılarının otomatik tespiti
+* Saldırı kategorilerinin belirlenmesi
+* Ağ telemetry verilerinin analizi
+* Risk seviyesinin hesaplanması
+* PDF rapor oluşturulması
 
 ---
 
-## Model Dosyaları
+# 🔮 Gelecek Çalışmalar
 
-Model dosyaları boyut limitleri nedeniyle GitHub reposuna eklenmemiştir.
-
-Aşağıdaki `.pkl` dosyaları manuel olarak:
-
-```txt
-backend/model/
-```
-
-klasörüne eklenmelidir.
-
-```txt
-network_anomaly_rf_package.pkl
-svm_model_package.pkl
-xgboost_model_package.pkl
-multi_class_attack_model_package.pkl
-```
+* SHAP Explainable AI entegrasyonu
+* OpenTelemetry entegrasyonu
+* Mininet tabanlı ağ simülasyonu
+* Gerçek zamanlı paket yakalama
+* Model optimizasyonları
+* Docker ve Kubernetes desteği
 
 ---
 
-## Model Performansı
 
-Projede kullanılan modeller yüksek doğruluk ve F1-score değerleri elde etmiştir.
 
-Özellikle:
-- Random Forest
-- XGBoost
 
-modelleri başarılı sonuçlar vermiştir.
 
----
-
-## Karşılaşılan Problemler
-
-- Veri leakage problemi
-- Büyük veri boyutu nedeniyle performans problemleri
-- Frontend-backend kolon uyumsuzlukları
-- Farklı modellerin farklı preprocessing ihtiyaçları
-- Dashboard optimizasyon süreçleri
-
----
-
-## Devam Eden Çalışmalar
-
-- SHAP Explainability sistemi
-- Daha gelişmiş saldırı görselleştirmeleri
-- PDF güvenlik raporu oluşturma
-- Gerçek zamanlı paket analizi
-- Dashboard optimizasyonları
-
----
-
-## Proje Durumu
-
-- Veri temizleme tamamlandı
-- Model eğitimleri tamamlandı
-- Dashboard geliştirildi
-- Binary classification sistemi çalışıyor
-- Multi-model selection sistemi geliştirildi
-- Multi-class attack detection sistemi entegre edildi
-- UI/UX iyileştirmeleri devam ediyor
-- Explainable AI entegrasyonu planlanıyor
-
----
-
-## Grup Üyeleri
+##  👨‍💻 Geliştiriciler
 
 - Abdulkadir Biner
 - Melih Tülü
