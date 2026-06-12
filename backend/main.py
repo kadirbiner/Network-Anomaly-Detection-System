@@ -5,11 +5,12 @@ import pandas as pd
 import joblib
 import os
 import uuid
+import random
 
 app = FastAPI(
     title="Network Anomaly Detection API",
     description="Machine Learning based network anomaly and attack category detection system",
-    version="3.0.0"
+    version="3.1.0"
 )
 
 app.add_middleware(
@@ -129,6 +130,69 @@ def get_prediction_label(value: int):
     return "Attack" if int(value) == 1 else "Normal"
 
 
+def safe_series(df: pd.DataFrame, column: str, default: float = 0.0) -> pd.Series:
+    if column not in df.columns:
+        return pd.Series([default] * len(df), index=df.index, dtype="float64")
+
+    return pd.to_numeric(
+        df[column],
+        errors="coerce"
+    ).fillna(default)
+
+
+def calculate_telemetry_summary(df: pd.DataFrame) -> Dict[str, Any]:
+    if len(df) == 0:
+        return {
+            "flow_count": 0,
+            "total_packets": 0,
+            "total_bytes": 0,
+            "avg_packet_rate": 0,
+            "max_packet_rate": 0,
+            "avg_byte_rate": 0,
+            "max_byte_rate": 0,
+            "avg_duration": 0,
+            "active_connections": 0
+        }
+
+    duration = safe_series(df, "dur").clip(lower=0)
+    safe_duration = duration.replace(0, 1e-6)
+
+    spkts = safe_series(df, "spkts")
+    dpkts = safe_series(df, "dpkts")
+
+    sbytes = safe_series(df, "sbytes")
+    dbytes = safe_series(df, "dbytes")
+
+    total_packets = spkts + dpkts
+    total_bytes = sbytes + dbytes
+
+    if "rate" in df.columns:
+        packet_rate = safe_series(df, "rate")
+    else:
+        packet_rate = total_packets / safe_duration
+
+    byte_rate = total_bytes / safe_duration
+
+    active_connections = max(
+        safe_series(df, "ct_srv_src").sum(),
+        safe_series(df, "ct_dst_src_ltm").sum(),
+        safe_series(df, "ct_src_ltm").sum(),
+        len(df)
+    )
+
+    return {
+        "flow_count": int(len(df)),
+        "total_packets": int(total_packets.sum()),
+        "total_bytes": int(total_bytes.sum()),
+        "avg_packet_rate": round(float(packet_rate.mean()), 2),
+        "max_packet_rate": round(float(packet_rate.max()), 2),
+        "avg_byte_rate": round(float(byte_rate.mean()), 2),
+        "max_byte_rate": round(float(byte_rate.max()), 2),
+        "avg_duration": round(float(duration.mean()), 6),
+        "active_connections": int(active_connections)
+    }
+
+
 def safe_metric(cfg_metrics: Dict[str, Any], pkg_metrics: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     metrics = dict(cfg_metrics)
 
@@ -204,11 +268,134 @@ def validate_dataframe(df: pd.DataFrame, features: List[str], model_name: str):
     return None
 
 
+def build_synthetic_traffic(profile: str, record_count: int, features: List[str]) -> pd.DataFrame:
+    profile = profile.lower()
+    record_count = max(20, min(record_count, 5000))
+
+    rows = []
+
+    for _ in range(record_count):
+        if profile == "mixed":
+            selected_profile = random.choice(["normal", "ddos", "port_scan"])
+        else:
+            selected_profile = profile
+
+        if selected_profile == "normal":
+            dur = random.uniform(0.05, 2.5)
+            spkts = random.randint(4, 40)
+            dpkts = random.randint(2, 35)
+            sbytes = spkts * random.randint(60, 800)
+            dbytes = dpkts * random.randint(60, 1000)
+            sttl = random.choice([31, 32, 60, 64])
+            dttl = random.choice([29, 30, 60, 64])
+            ct_state_ttl = random.randint(0, 2)
+            ct_dst_src_ltm = random.randint(1, 8)
+            ct_srv_dst = random.randint(1, 10)
+            connection_density = random.randint(1, 12)
+
+        elif selected_profile == "ddos":
+            dur = random.uniform(0.00001, 0.05)
+            spkts = random.randint(20, 180)
+            dpkts = random.randint(0, 5)
+            sbytes = spkts * random.randint(80, 1400)
+            dbytes = dpkts * random.randint(0, 200)
+            sttl = random.choice([254, 255])
+            dttl = random.choice([0, 1])
+            ct_state_ttl = random.randint(2, 6)
+            ct_dst_src_ltm = random.randint(25, 120)
+            ct_srv_dst = random.randint(30, 150)
+            connection_density = random.randint(30, 160)
+
+        elif selected_profile == "port_scan":
+            dur = random.uniform(0.0001, 0.2)
+            spkts = random.randint(1, 6)
+            dpkts = random.randint(0, 2)
+            sbytes = spkts * random.randint(40, 120)
+            dbytes = dpkts * random.randint(0, 80)
+            sttl = random.choice([254, 255])
+            dttl = random.choice([0, 1, 30])
+            ct_state_ttl = random.randint(2, 5)
+            ct_dst_src_ltm = random.randint(40, 180)
+            ct_srv_dst = random.randint(10, 80)
+            connection_density = random.randint(40, 180)
+
+        else:
+            dur = random.uniform(0.05, 2.5)
+            spkts = random.randint(4, 40)
+            dpkts = random.randint(2, 35)
+            sbytes = spkts * random.randint(60, 800)
+            dbytes = dpkts * random.randint(60, 1000)
+            sttl = random.choice([31, 32, 60, 64])
+            dttl = random.choice([29, 30, 60, 64])
+            ct_state_ttl = random.randint(0, 2)
+            ct_dst_src_ltm = random.randint(1, 8)
+            ct_srv_dst = random.randint(1, 10)
+            connection_density = random.randint(1, 12)
+
+        total_packets = spkts + dpkts
+        total_bytes = sbytes + dbytes
+
+        rate = total_packets / max(dur, 1e-6)
+        sload = (sbytes * 8) / max(dur, 1e-6)
+        dload = (dbytes * 8) / max(dur, 1e-6)
+
+        row = {
+            "dur": dur,
+            "proto": 114,
+            "service": 0,
+            "state": 4,
+            "spkts": spkts,
+            "dpkts": dpkts,
+            "sbytes": sbytes,
+            "dbytes": dbytes,
+            "rate": rate,
+            "sttl": sttl,
+            "dttl": dttl,
+            "sload": sload,
+            "dload": dload,
+            "sloss": max(0, spkts // 20),
+            "dloss": max(0, dpkts // 20),
+            "sinpkt": dur / max(spkts, 1),
+            "dinpkt": dur / max(dpkts, 1),
+            "sjit": random.uniform(0, 2),
+            "djit": random.uniform(0, 2),
+            "swin": 255 if selected_profile == "normal" else 0,
+            "stcpb": 0,
+            "dtcpb": 0,
+            "dwin": 255 if selected_profile == "normal" else 0,
+            "tcprtt": random.uniform(0.001, 0.08),
+            "synack": random.uniform(0.001, 0.04),
+            "ackdat": random.uniform(0.001, 0.04),
+            "smean": sbytes / max(spkts, 1),
+            "dmean": dbytes / max(dpkts, 1),
+            "trans_depth": 0,
+            "response_body_len": 0,
+            "ct_srv_src": connection_density,
+            "ct_state_ttl": ct_state_ttl,
+            "ct_dst_ltm": connection_density,
+            "ct_src_dport_ltm": connection_density,
+            "ct_dst_sport_ltm": connection_density,
+            "ct_dst_src_ltm": ct_dst_src_ltm,
+            "is_ftp_login": 0,
+            "ct_ftp_cmd": 0,
+            "ct_flw_http_mthd": 0,
+            "ct_src_ltm": connection_density,
+            "ct_srv_dst": ct_srv_dst,
+            "is_sm_ips_ports": 0,
+            "total_packets": total_packets,
+            "total_bytes": total_bytes
+        }
+
+        rows.append({feature: row.get(feature, 0) for feature in features})
+
+    return pd.DataFrame(rows)
+
+
 @app.get("/")
 def home():
     return {
         "message": "Network Anomaly Detection API is running",
-        "version": "3.0.0",
+        "version": "3.1.0",
         "available_binary_models": list(BINARY_MODEL_CONFIGS.keys()),
         "multi_class_available": multi_package is not None,
         "status": "active"
@@ -330,10 +517,12 @@ async def predict_csv(
             preview_columns.append("attack_probability")
 
         preview = result_df[preview_columns].head(20).to_dict(orient="records")
+        telemetry_summary = calculate_telemetry_summary(df)
 
         return {
             "success": True,
             "file_name": file.filename,
+            "source": "csv",
             "task": "Binary Network Anomaly Detection",
             "total_records": total_records,
             "normal_count": normal_count,
@@ -347,6 +536,7 @@ async def predict_csv(
             "model_description": selected["description"],
             "model_metrics": selected["metrics"],
             "top_features": TOP_FEATURES,
+            "telemetry_summary": telemetry_summary,
             "preview": preview
         }
 
@@ -362,6 +552,85 @@ async def predict_csv(
                 os.remove(file_path)
             except Exception:
                 pass
+
+
+@app.post("/predict-synthetic")
+def predict_synthetic(
+    profile: str = Query("mixed", description="Traffic profile: mixed, normal, ddos, port_scan"),
+    record_count: int = Query(500, description="Synthetic flow count"),
+    model_name: str = Query("random_forest", description="Model key: random_forest, svm, or xgboost")
+):
+    try:
+        selected = get_binary_model(model_name)
+
+        df = build_synthetic_traffic(
+            profile=profile,
+            record_count=record_count,
+            features=selected["features"]
+        )
+
+        X = df[selected["features"]].copy()
+
+        if selected["scaler"] is not None:
+            X_input = selected["scaler"].transform(X)
+        else:
+            X_input = X
+
+        predictions = selected["model"].predict(X_input)
+
+        if hasattr(selected["model"], "predict_proba"):
+            probabilities = selected["model"].predict_proba(X_input)[:, 1]
+        else:
+            probabilities = [None] * len(predictions)
+
+        result_df = df.copy()
+        result_df["prediction"] = predictions
+        result_df["prediction_label"] = result_df["prediction"].apply(get_prediction_label)
+
+        if probabilities is not None:
+            result_df["attack_probability"] = probabilities
+
+        total_records = len(df)
+        normal_count = int((predictions == 0).sum())
+        attack_count = int((predictions == 1).sum())
+        attack_ratio = round((attack_count / total_records) * 100, 2)
+
+        risk_level, severity_score, risk_message = calculate_risk_level(attack_ratio)
+
+        preview_columns = ["prediction", "prediction_label"]
+        if "attack_probability" in result_df.columns:
+            preview_columns.append("attack_probability")
+
+        preview = result_df[preview_columns].head(20).to_dict(orient="records")
+        telemetry_summary = calculate_telemetry_summary(df)
+
+        return {
+            "success": True,
+            "file_name": f"synthetic_{profile}.csv",
+            "source": "synthetic",
+            "synthetic_profile": profile,
+            "task": "Synthetic Binary Network Anomaly Detection",
+            "total_records": total_records,
+            "normal_count": normal_count,
+            "attack_count": attack_count,
+            "attack_ratio": attack_ratio,
+            "risk_level": risk_level,
+            "severity_score": severity_score,
+            "risk_message": risk_message,
+            "model_name": selected["display_name"],
+            "model_key": selected["key"],
+            "model_description": selected["description"],
+            "model_metrics": selected["metrics"],
+            "top_features": TOP_FEATURES,
+            "telemetry_summary": telemetry_summary,
+            "preview": preview
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 
 @app.post("/predict-attack-category")
